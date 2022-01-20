@@ -9,6 +9,14 @@ import pickle
 import time
 import cv2
 
+import paho.mqtt.client as mqtt #import the client1
+broker_address="192.168.1.103" 
+#broker_address="iot.eclipse.org" #use external broker
+client = mqtt.Client("Face_req") #create new instance
+client.connect(broker_address, 1884) #connect to broker
+client.loop_start()
+
+
 #Initialize 'currentname' to trigger only when a new person is identified.
 currentname = "unknown"
 #Determine faces from encodings.pickle file model created from train_model.py
@@ -23,7 +31,7 @@ data = pickle.loads(open(encodingsP, "rb").read())
 # Set the ser to the followng
 # src = 0 : for the build in single web cam, could be your laptop webcam
 # src = 2 : I had to set it to 2 inorder to use the USB webcam attached to my laptop
-vs = VideoStream(src=2,framerate=10).start()
+vs = VideoStream(src=0,framerate=10).start()
 #vs = VideoStream(usePiCamera=True).start()
 time.sleep(2.0)
 
@@ -73,35 +81,36 @@ while True:
 			if currentname != name:
 				currentname = name
 				print(currentname)
+				client.publish("people/detected",name)
 
 		# update the list of names
 		names.append(name)
 
 	# loop over the recognized faces
-	for ((top, right, bottom, left), name) in zip(boxes, names):
-		# draw the predicted face name on the image - color is in BGR
-		cv2.rectangle(frame, (left, top), (right, bottom),
-			(0, 255, 225), 2)
-		y = top - 15 if top - 15 > 15 else top + 15
-		cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
-			.8, (0, 255, 255), 2)
+#	for ((top, right, bottom, left), name) in zip(boxes, names):
+#		# draw the predicted face name on the image - color is in BGR
+#		cv2.rectangle(frame, (left, top), (right, bottom),
+#			(0, 255, 225), 2)
+#		y = top - 15 if top - 15 > 15 else top + 15
+#		cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+#			.8, (0, 255, 255), 2)
 
 	# display the image to our screen
-	cv2.imshow("Facial Recognition is Running", frame)
-	key = cv2.waitKey(1) & 0xFF
+#	cv2.imshow("Facial Recognition is Running", frame)
+#	key = cv2.waitKey(1) & 0xFF
 
 	# quit when 'q' key is pressed
-	if key == ord("q"):
-		break
+#	if key == ord("q"):
+#		break
 
 	# update the FPS counter
-	fps.update()
+#	fps.update()
 
 # stop the timer and display FPS information
-fps.stop()
-print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+#fps.stop()
+#print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
+#print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
 # do a bit of cleanup
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
 vs.stop()
